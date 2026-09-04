@@ -3,25 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Web Search</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+            color: #202124;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        #search {
+            flex: 1;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        #search:focus {
+            border-color: #4285f4;
+        }
+
+        #searchButton {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #4285f4;
+            color: white;
+        }
+
+        #searchButton:hover {
+            background: #3367d6;
+        }
+
+        #results {
+            margin-top: 35px;
+        }
+
+        .result {
+            margin-bottom: 28px;
+        }
+
+        .result a {
+            font-size: 20px;
+            color: #1a0dab;
+            text-decoration: none;
+        }
+
+        .result a:hover {
+            text-decoration: underline;
+        }
+
+        .url {
+            margin-top: 4px;
+            color: #188038;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .description {
+            margin-top: 6px;
+            color: #4d5156;
+            line-height: 1.5;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+        }
+    </style>
 </head>
 
 <body>
+
+<div class="container">
+
     <h1>Web Search</h1>
 
-    <input id="search" type="text" placeholder="Search the web">
-    <button id="searchButton">Search</button>
+    <div class="search-box">
+        <input
+            id="search"
+            type="text"
+            placeholder="Search the web..."
+            autocomplete="off"
+        >
+
+        <button id="searchButton">
+            Search
+        </button>
+    </div>
 
     <div id="results"></div>
 
-    <script>
-        document.getElementById("searchButton").onclick = async () => {
-            const query = document.getElementById("search").value.trim();
+</div>
 
-            if (!query) return;
+<script>
 
-            document.getElementById("results").textContent = "Searching...";
-        };
-    </script>
+const API_URL = "https://web-search-rho-smoky.vercel.app/api/search";
+
+const searchInput = document.getElementById("search");
+const searchButton = document.getElementById("searchButton");
+const results = document.getElementById("results");
+
+async function search() {
+
+    const query = searchInput.value.trim();
+
+    if (!query) {
+        return;
+    }
+
+    results.innerHTML = '<p class="status">Searching...</p>';
+
+    try {
+
+        const response = await fetch(
+            API_URL + "?q=" + encodeURIComponent(query)
+        );
+
+        if (!response.ok) {
+            throw new Error("Search request failed");
+        }
+
+        const data = await response.json();
+
+        results.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+            results.innerHTML =
+                '<p class="status">No results found.</p>';
+
+            return;
+        }
+
+        data.results.forEach(result => {
+
+            const resultElement = document.createElement("div");
+            resultElement.className = "result";
+
+            const title = document.createElement("a");
+            title.href = result.url;
+            title.target = "_blank";
+            title.rel = "noopener noreferrer";
+            title.textContent = result.title;
+
+            const url = document.createElement("div");
+            url.className = "url";
+            url.textContent = result.url;
+
+            const description = document.createElement("div");
+            description.className = "description";
+            description.textContent = result.content || "";
+
+            resultElement.appendChild(title);
+            resultElement.appendChild(url);
+            resultElement.appendChild(description);
+
+            results.appendChild(resultElement);
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        results.innerHTML =
+            '<p class="status">Something went wrong while searching.</p>';
+    }
+}
+
+searchButton.addEventListener("click", search);
+
+searchInput.addEventListener("keydown", event => {
+
+    if (event.key === "Enter") {
+        search();
+    }
+
+});
+
+</script>
+
 </body>
 </html>
